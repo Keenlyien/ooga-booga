@@ -1,7 +1,16 @@
+// ---------- helpers ----------
+function parseList(str){
+  return str.split(',')
+    .map(s => parseInt(s.trim()))
+    .filter(n => !isNaN(n) && n > 0);
+}
+
 // ---------- Stage 1 ----------
-const fusionLevel = document.getElementById('fusionLevel');
-const xyzRank = document.getElementById('xyzRank');
-const totalCards = document.getElementById('totalCards');
+const yourHand = document.getElementById('yourHand');
+const oppHand = document.getElementById('oppHand');
+const fieldCards = document.getElementById('fieldCards');
+const yourFusions = document.getElementById('yourFusions');
+const yourXyz = document.getElementById('yourXyz');
 const stage1Result = document.getElementById('stage1Result');
 const scaleFill = document.getElementById('scaleFill');
 const scaleMarker = document.getElementById('scaleMarker');
@@ -10,71 +19,64 @@ const scaleRightLabel = document.getElementById('scaleRightLabel');
 
 const stage2Panel = document.getElementById('stage2Panel');
 const unlockNote = document.getElementById('unlockNote');
-const suggestions = document.getElementById('suggestions');
-const suggChips = document.getElementById('suggChips');
 
 let stage1Passed = false;
 
-function showSuggestions(tc){
-  suggChips.innerHTML = '';
-  if(isNaN(tc) || tc <= 0){
-    suggestions.classList.remove('show');
-    return;
-  }
+function findCostCombos(fusionLevels, xyzRanks, total){
+  // group xyz ranks by value, need at least 2 of a kind
+  const rankCounts = {};
+  xyzRanks.forEach(r => rankCounts[r] = (rankCounts[r]||0)+1);
+  const validRanks = Object.keys(rankCounts).filter(r => rankCounts[r] >= 2).map(Number);
+
   const combos = [];
-  // Fusion Level 1-12, Xyz Rank 1-13, sum = fl + xr*2
-  for(let xr = 1; xr <= 13; xr++){
-    const fl = tc - xr*2;
-    if(fl >= 1 && fl <= 12){
-      combos.push({fl, xr});
-    }
-  }
-  if(combos.length === 0){
-    suggestions.classList.remove('show');
-    return;
-  }
-  combos.slice(0, 8).forEach(c => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'sugg-chip';
-    chip.textContent = `Lv${c.fl} + Rk${c.xr}×2`;
-    chip.addEventListener('click', () => {
-      fusionLevel.value = c.fl;
-      xyzRank.value = c.xr;
-      evalStage1();
+  fusionLevels.forEach(fl => {
+    validRanks.forEach(xr => {
+      if(fl + xr*2 === total){
+        combos.push({fl, xr});
+      }
     });
-    suggChips.appendChild(chip);
   });
-  suggestions.classList.add('show');
+  return combos;
 }
 
 function evalStage1(){
-  const fl = parseInt(fusionLevel.value);
-  const xr = parseInt(xyzRank.value);
-  const tc = parseInt(totalCards.value);
+  const yh = parseInt(yourHand.value);
+  const oh = parseInt(oppHand.value);
+  const fc = parseInt(fieldCards.value);
+  const fusions = parseList(yourFusions.value);
+  const xyzs = parseList(yourXyz.value);
 
-  showSuggestions(tc);
+  const haveCounts = !isNaN(yh) && !isNaN(oh) && !isNaN(fc) && yh>=0 && oh>=0 && fc>=0;
 
-  const haveAll = !isNaN(fl) && !isNaN(xr) && !isNaN(tc) && fl>0 && xr>0 && tc>=0;
-
-  if(!haveAll){
+  if(!haveCounts){
     stage1Result.className = 'result';
-    stage1Result.innerHTML = '<div class="dot"></div><div>Fill in the three numbers above to check if the cost is legal.</div>';
-    updateScale(null,null);
+    stage1Result.innerHTML = '<div class="dot"></div><div>Fill in the card counts and your Extra Deck monsters to see which combos work.</div>';
+    updateScale(null, null);
     setStage1Passed(false);
     return;
   }
 
-  const sum = fl + xr + xr;
-  updateScale(sum, tc);
+  const total = yh + oh + fc;
 
-  if(sum === tc){
+  if(fusions.length === 0 || xyzs.length === 0){
+    stage1Result.className = 'result';
+    stage1Result.innerHTML = `<div class="dot"></div><div>Total cards in play: <strong>${total}</strong>. Now list your Fusion Monsters' Levels and Xyz Monsters' Ranks to find a legal combo.</div>`;
+    updateScale(null, total);
+    setStage1Passed(false);
+    return;
+  }
+
+  const combos = findCostCombos(fusions, xyzs, total);
+  updateScale(combos.length ? total : null, total);
+
+  if(combos.length > 0){
+    const list = combos.map(c => `Level ${c.fl} Fusion + two Rank ${c.xr} Xyz`).join('; ');
     stage1Result.className = 'result ok';
-    stage1Result.innerHTML = `<div class="dot"></div><div><strong>Legal cost.</strong> ${fl} + ${xr} + ${xr} = ${sum}, matching the ${tc} total cards in play. You may banish this useless shit and activate the effect.<span class="math">Level ${fl} (Fusion) + Rank ${xr} + Rank ${xr} (Xyz \u00d72) = ${sum} = ${tc} cards</span></div>`;
+    stage1Result.innerHTML = `<div class="dot"></div><div><strong>Legal combo found.</strong> Total cards in play: ${total}. You can banish: ${list}.<span class="math">Fusion Level + Rank + Rank = ${total}</span></div>`;
     setStage1Passed(true);
   } else {
     stage1Result.className = 'result fail';
-    stage1Result.innerHTML = `<div class="dot"></div><div><strong>Not legal.</strong> ${fl} + ${xr} + ${xr} = ${sum}, which does not equal ${tc} total cards in play. Adjust your monsters or recount the cards.<span class="math">Level ${fl} + Rank ${xr} + Rank ${xr} = ${sum} \u2260 ${tc}</span></div>`;
+    stage1Result.innerHTML = `<div class="dot"></div><div><strong>No legal combo.</strong> Total cards in play: ${total}, but no Fusion Level + (matching pair of Xyz Ranks ×2) from your list adds up to it. Try different monsters or recheck your counts.<span class="math">Need Fusion + Rank×2 = ${total}</span></div>`;
     setStage1Passed(false);
   }
 }
@@ -85,8 +87,8 @@ function updateScale(sum, target){
     scaleMarker.style.left = '0%';
     scaleMarker.style.background = 'var(--gold)';
     scaleMarker.style.boxShadow = '0 0 12px rgba(240,196,25,0.7)';
-    scaleLeftLabel.textContent = 'Your sum: \u2014';
-    scaleRightLabel.textContent = 'Target: \u2014';
+    scaleLeftLabel.textContent = 'Your sum: —';
+    scaleRightLabel.textContent = 'Target: ' + (target===null ? '—' : target);
     return;
   }
   const max = Math.max(sum, target, 1);
@@ -112,73 +114,56 @@ function setStage1Passed(passed){
   }
 }
 
-[fusionLevel, xyzRank, totalCards].forEach(el => el.addEventListener('input', evalStage1));
+[yourHand, oppHand, fieldCards, yourFusions, yourXyz].forEach(el => el.addEventListener('input', evalStage1));
 
 // ---------- Stage 2 ----------
 const oppMonster = document.getElementById('oppMonster');
-const returnFusionLevel = document.getElementById('returnFusionLevel');
-const returnXyzRank = document.getElementById('returnXyzRank');
+const bankedFusions = document.getElementById('bankedFusions');
+const bankedXyz = document.getElementById('bankedXyz');
 const stage2Result = document.getElementById('stage2Result');
-const suggestions2 = document.getElementById('suggestions2');
-const suggChips2 = document.getElementById('suggChips2');
 
-function showSuggestions2(target){
-  suggChips2.innerHTML = '';
-  if(isNaN(target) || target <= 0){
-    suggestions2.classList.remove('show');
-    return;
-  }
+function findEffectCombos(fusionLevels, xyzRanks, target){
   const combos = [];
-  for(let xr = 1; xr <= 13; xr++){
-    const fl = target - xr;
-    if(fl >= 1 && fl <= 12){
-      combos.push({fl, xr});
-    }
-  }
-  if(combos.length === 0){
-    suggestions2.classList.remove('show');
-    return;
-  }
-  combos.slice(0, 8).forEach(c => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'sugg-chip';
-    chip.textContent = `Lv${c.fl} + Rk${c.xr}`;
-    chip.addEventListener('click', () => {
-      returnFusionLevel.value = c.fl;
-      returnXyzRank.value = c.xr;
-      evalStage2();
+  fusionLevels.forEach(fl => {
+    xyzRanks.forEach(xr => {
+      if(fl + xr === target){
+        combos.push({fl, xr});
+      }
     });
-    suggChips2.appendChild(chip);
   });
-  suggestions2.classList.add('show');
+  return combos;
 }
 
 function evalStage2(){
   const target = parseInt(oppMonster.value);
-  const rfl = parseInt(returnFusionLevel.value);
-  const rxr = parseInt(returnXyzRank.value);
+  const fusions = parseList(bankedFusions.value);
+  const xyzs = parseList(bankedXyz.value);
 
-  showSuggestions2(target);
-
-  if(isNaN(target) || target<=0 || isNaN(rfl) || isNaN(rxr) || rfl<=0 || rxr<=0){
+  if(isNaN(target) || target <= 0){
     stage2Result.className = 'result';
-    stage2Result.innerHTML = '<div class="dot"></div><div>Fill in the opponent\u2019s monster and the monsters you\u2019re returning to check the wipe condition.</div>';
+    stage2Result.innerHTML = '<div class="dot"></div><div>Fill in the opponent\u2019s monster and your banished monsters to see which combo wipes the field.</div>';
     return;
   }
 
-  const sum = rfl + rxr;
+  if(fusions.length === 0 || xyzs.length === 0){
+    stage2Result.className = 'result';
+    stage2Result.innerHTML = `<div class="dot"></div><div>List your banished Fusion Monsters' Levels and Xyz Monsters' Ranks to check against Level/Rank ${target}.</div>`;
+    return;
+  }
 
-  if(sum === target){
+  const combos = findEffectCombos(fusions, xyzs, target);
+
+  if(combos.length > 0){
+    const list = combos.map(c => `Level ${c.fl} Fusion + Rank ${c.xr} Xyz`).join('; ');
     stage2Result.className = 'result ok';
-    stage2Result.innerHTML = `<div class="dot"></div><div><strong>Condition met \u2014 banish their entire field.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, matching their Level/Rank ${target} monster.<span class="math">${rfl} + ${rxr} = ${sum} = ${target}</span></div>`;
+    stage2Result.innerHTML = `<div class="dot"></div><div><strong>Condition met \u2014 banish their entire field.</strong> You can return: ${list}.<span class="math">Fusion Level + Xyz Rank = ${target}</span></div>`;
   } else {
     stage2Result.className = 'result fail';
-    stage2Result.innerHTML = `<div class="dot"></div><div><strong>No match.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, which doesn't equal ${target}. No field wipe \u2014 try a different pair, or pick one of the suggestions above.<span class="math">${rfl} + ${rxr} = ${sum} \u2260 ${target}</span></div>`;
+    stage2Result.innerHTML = `<div class="dot"></div><div><strong>No match.</strong> None of your banished monsters' Levels/Ranks combine to ${target}. No field wipe with this opponent monster.<span class="math">Need Fusion Level + Xyz Rank = ${target}</span></div>`;
   }
 }
 
-[oppMonster, returnFusionLevel, returnXyzRank].forEach(el => el.addEventListener('input', evalStage2));
+[oppMonster, bankedFusions, bankedXyz].forEach(el => el.addEventListener('input', evalStage2));
 
 // init
 setStage1Passed(false);
