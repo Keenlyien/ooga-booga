@@ -70,7 +70,7 @@ function evalStage1(){
 
   if(sum === tc){
     stage1Result.className = 'result ok';
-    stage1Result.innerHTML = `<div class="dot"></div><div><strong>Legal cost.</strong> ${fl} + ${xr} + ${xr} = ${sum}, matching the ${tc} total cards in play. You may banish this trio and activate the effect.<span class="math">Level ${fl} (Fusion) + Rank ${xr} + Rank ${xr} (Xyz \u00d72) = ${sum} = ${tc} cards</span></div>`;
+    stage1Result.innerHTML = `<div class="dot"></div><div><strong>Legal cost.</strong> ${fl} + ${xr} + ${xr} = ${sum}, matching the ${tc} total cards in play. You may banish this useless shit and activate the effect.<span class="math">Level ${fl} (Fusion) + Rank ${xr} + Rank ${xr} (Xyz \u00d72) = ${sum} = ${tc} cards</span></div>`;
     setStage1Passed(true);
   } else {
     stage1Result.className = 'result fail';
@@ -115,73 +115,72 @@ function setStage1Passed(passed){
 [fusionLevel, xyzRank, totalCards].forEach(el => el.addEventListener('input', evalStage1));
 
 // ---------- Stage 2 ----------
+const oppMonster = document.getElementById('oppMonster');
 const returnFusionLevel = document.getElementById('returnFusionLevel');
 const returnXyzRank = document.getElementById('returnXyzRank');
-const oppList = document.getElementById('oppList');
-const addOppBtn = document.getElementById('addOppBtn');
 const stage2Result = document.getElementById('stage2Result');
+const suggestions2 = document.getElementById('suggestions2');
+const suggChips2 = document.getElementById('suggChips2');
 
-let oppCount = 0;
-
-function addOppRow(value){
-  oppCount++;
-  const row = document.createElement('div');
-  row.className = 'opp-item';
-  row.innerHTML = `
-    <span class="opp-tag">Monster ${oppCount}</span>
-    <input type="number" class="opp-input" min="1" max="13" placeholder="Level or Rank">
-    <button type="button" class="icon-btn remove-opp" title="Remove">\u2715</button>
-  `;
-  oppList.appendChild(row);
-  const input = row.querySelector('.opp-input');
-  if(value !== undefined) input.value = value;
-  input.addEventListener('input', evalStage2);
-  row.querySelector('.remove-opp').addEventListener('click', () => {
-    row.remove();
-    relabelOppRows();
-    evalStage2();
+function showSuggestions2(target){
+  suggChips2.innerHTML = '';
+  if(isNaN(target) || target <= 0){
+    suggestions2.classList.remove('show');
+    return;
+  }
+  const combos = [];
+  for(let xr = 1; xr <= 13; xr++){
+    const fl = target - xr;
+    if(fl >= 1 && fl <= 12){
+      combos.push({fl, xr});
+    }
+  }
+  if(combos.length === 0){
+    suggestions2.classList.remove('show');
+    return;
+  }
+  combos.slice(0, 8).forEach(c => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'sugg-chip';
+    chip.textContent = `Lv${c.fl} + Rk${c.xr}`;
+    chip.addEventListener('click', () => {
+      returnFusionLevel.value = c.fl;
+      returnXyzRank.value = c.xr;
+      evalStage2();
+    });
+    suggChips2.appendChild(chip);
   });
+  suggestions2.classList.add('show');
 }
-
-function relabelOppRows(){
-  const rows = oppList.querySelectorAll('.opp-item');
-  rows.forEach((row, i) => {
-    row.querySelector('.opp-tag').textContent = 'Monster ' + (i+1);
-  });
-  oppCount = rows.length;
-}
-
-addOppBtn.addEventListener('click', () => addOppRow());
 
 function evalStage2(){
+  const target = parseInt(oppMonster.value);
   const rfl = parseInt(returnFusionLevel.value);
   const rxr = parseInt(returnXyzRank.value);
-  const oppInputs = Array.from(document.querySelectorAll('.opp-input'));
-  const oppValues = oppInputs.map(i => parseInt(i.value)).filter(v => !isNaN(v) && v>0);
 
-  if(isNaN(rfl) || isNaN(rxr) || rfl<=0 || rxr<=0 || oppValues.length===0){
+  showSuggestions2(target);
+
+  if(isNaN(target) || target<=0 || isNaN(rfl) || isNaN(rxr) || rfl<=0 || rxr<=0){
     stage2Result.className = 'result';
-    stage2Result.innerHTML = '<div class="dot"></div><div>Fill in the returned monsters and your opponent\u2019s board to check the wipe condition.</div>';
+    stage2Result.innerHTML = '<div class="dot"></div><div>Fill in the opponent\u2019s monster and the monsters you\u2019re returning to check the wipe condition.</div>';
     return;
   }
 
   const sum = rfl + rxr;
-  const matchIndex = oppValues.findIndex(v => v === sum);
 
-  if(matchIndex !== -1){
+  if(sum === target){
     stage2Result.className = 'result ok';
-    stage2Result.innerHTML = `<div class="dot"></div><div><strong>Condition met \u2014 banish their entire field.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, matching Monster ${matchIndex+1} (Level/Rank ${oppValues[matchIndex]}).<span class="math">${rfl} + ${rxr} = ${sum} = opponent's Monster ${matchIndex+1}</span></div>`;
+    stage2Result.innerHTML = `<div class="dot"></div><div><strong>Condition met \u2014 banish their entire field.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, matching their Level/Rank ${target} monster.<span class="math">${rfl} + ${rxr} = ${sum} = ${target}</span></div>`;
   } else {
     stage2Result.className = 'result fail';
-    stage2Result.innerHTML = `<div class="dot"></div><div><strong>No match.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, which doesn't equal the Level/Rank of any monster your opponent controls (${oppValues.join(', ')}). No field wipe \u2014 try a different pair.<span class="math">${rfl} + ${rxr} = ${sum} \u2260 [${oppValues.join(', ')}]</span></div>`;
+    stage2Result.innerHTML = `<div class="dot"></div><div><strong>No match.</strong> Level ${rfl} + Rank ${rxr} = ${sum}, which doesn't equal ${target}. No field wipe \u2014 try a different pair, or pick one of the suggestions above.<span class="math">${rfl} + ${rxr} = ${sum} \u2260 ${target}</span></div>`;
   }
 }
 
-[returnFusionLevel, returnXyzRank].forEach(el => el.addEventListener('input', evalStage2));
+[oppMonster, returnFusionLevel, returnXyzRank].forEach(el => el.addEventListener('input', evalStage2));
 
 // init
-addOppRow();
-addOppRow();
 setStage1Passed(false);
 evalStage1();
 evalStage2();

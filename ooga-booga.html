@@ -10,10 +10,10 @@
 <div class="wrap">
 
   <div class="hero">
-    <div class="eyebrow">Trap Card Resolver</div>
+    <div class="eyebrow">Simultaneous Equation Cannons without doing the math</div>
     <h1 class="title">Ooga Booga</h1>
-    <p class="subtitle">Type in what's on the field. The math gets checked for you — no more counting hands under your breath at locals.</p>
-    <div class="card-name">⚡ Simultaneous Equation Cannons — Normal Trap</div>
+    <p class="subtitle">Fill in what's needed then you can automatically calculate the math card without doing math.</p>
+    <div class="card-name"> Ooga-Booga; Math is for the weak. </div>
 
     <div class="scale-wrap">
       <div class="scale-track">
@@ -29,7 +29,7 @@
 
   <!-- STAGE 1: COST -->
   <div class="panel" data-stage="Stage 1 · Activation Cost">
-    <h2>Banish the Extra Deck trio</h2>
+    <h2>Banish useless fusion and XYZ monsters</h2>
     <p class="desc">Banish 1 Fusion Monster and 2 Xyz Monsters of the <em>same Rank</em> from your Extra Deck. Their combined Level + Rank + Rank must equal the total number of cards in both players' hands and on the field.</p>
 
     <div class="field-row">
@@ -61,12 +61,17 @@
 
   <!-- STAGE 2: EFFECT -->
   <div class="panel" id="stage2Panel" data-stage="Stage 2 · Optional Effect">
-    <h2>Return 2, then banish their whole field</h2>
+    <h2>Return 2 useless Fusion and XYZ monsters</h2>
     <p class="desc">Return 1 Xyz and 1 Fusion Monster from your banished pile to the Extra Deck. Their combined Level/Rank must equal the Level <em>or</em> Rank of exactly one face-up monster your opponent controls. If it matches, banish everything they control.</p>
 
     <div class="unlock-note" id="unlockNote">🔒 Resolve Stage 1 successfully first to unlock this section.</div>
 
     <div class="field-row">
+      <div class="field">
+        <label for="oppMonster">Opponent's monster — Level or Rank</label>
+        <input type="number" id="oppMonster" min="1" max="13" placeholder="e.g. 7">
+        <span class="hint">The face-up monster you want to match.</span>
+      </div>
       <div class="field">
         <label for="returnFusionLevel">Returned Fusion Monster — Level</label>
         <input type="number" id="returnFusionLevel" min="1" max="12" placeholder="e.g. 5">
@@ -77,17 +82,18 @@
       </div>
     </div>
 
-    <label style="font-size:12px;color:var(--ink-dim);font-weight:600;display:block;margin:18px 0 10px;">Opponent's face-up monsters (Level or Rank of each)</label>
-    <div class="opp-list" id="oppList"></div>
-    <button class="add-btn" id="addOppBtn" type="button">+ Add monster</button>
+    <div class="suggestions" id="suggestions2">
+      <div class="sugg-label">Combos that match this monster (Fusion Level + Xyz Rank):</div>
+      <div class="sugg-chips" id="suggChips2"></div>
+    </div>
 
     <div class="result" id="stage2Result">
       <div class="dot"></div>
-      <div>Fill in the returned monsters and your opponent's board to check the wipe condition.</div>
+      <div>Fill in the opponent's monster and the monsters you're returning to check the wipe condition.</div>
     </div>
   </div>
 
-  <footer>Built for duelists who'd rather duel than do arithmetic.</footer>
+  <footer>Use Simultaneous Equation Cannons without doing the math.</footer>
 </div>
 
 <script src="script.js"></script>
