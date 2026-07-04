@@ -1,106 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ooga Booga — Simultaneous Equation Cannons</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ooga Booga — Simultaneous Equation Cannons</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="wrap">
 
-  <div class="hero">
+  <!-- HERO -->
+  <header class="hero">
     <div class="eyebrow">Simultaneous Equation Cannons without doing the math</div>
     <h1 class="title">Ooga Booga</h1>
-    <p class="subtitle">Fill in what's needed then you can automatically calculate the math card without doing math.</p>
-    <div class="card-name">⚡ Ooga-Booga; Math is for the weak.</div>
+    <p class="subtitle">Fill in what's on the field. It finds the legal combo for you.</p>
+    <div class="card-badge">Ooga-Booga; Math is for the weak.</div>
+  </header>
 
-    <div class="scale-wrap">
-      <div class="scale-track">
-        <div class="scale-fill" id="scaleFill"></div>
-        <div class="scale-marker" id="scaleMarker"></div>
-      </div>
-      <div class="scale-labels">
-        <span id="scaleLeftLabel">Your sum: —</span>
-        <span id="scaleRightLabel">Target: —</span>
-      </div>
-    </div>
-  </div>
+  <!-- STAGE 1 -->
+  <section class="stage" id="stage1Section">
+    <div class="stage-label">Stage 1 · Activation Cost</div>
+    <h2>Banish useless Fusion and XYZ monsters</h2>
+    <p class="desc">Banish 1 Fusion Monster and 2 Xyz Monsters of the <em>same Rank</em> from your Extra Deck. Their combined Level + Rank + Rank must equal the total number of cards in both players' hands and on the field.</p>
 
-  <!-- STAGE 1: COST -->
-  <div class="panel" data-stage="Stage 1 · Activation Cost">
-    <h2>Banish useless fusion and XYZ monsters</h2>
-    <p class="desc">Banish 1 Fusion Monster and 2 Xyz Monsters of the <em>same Rank</em> from your Extra Deck. Their combined Level + Rank + Rank must equal the total number of cards in both players' hands and on the field. Just enter what's actually in play — no need to add anything up yourself.</p>
-
-    <div class="field-row">
+    <div class="field-group">
       <div class="field">
-        <label for="yourHand">Cards in your hand</label>
+        <label for="yourHand">Your hand — card count</label>
         <input type="number" id="yourHand" min="0" placeholder="e.g. 4">
       </div>
       <div class="field">
-        <label for="oppHand">Cards in opponent's hand</label>
+        <label for="oppHand">Opponent's hand — card count</label>
         <input type="number" id="oppHand" min="0" placeholder="e.g. 3">
       </div>
       <div class="field">
-        <label for="fieldCards">Cards on the field (both sides, total)</label>
+        <label for="fieldCards">Cards on the field — both sides</label>
         <input type="number" id="fieldCards" min="0" placeholder="e.g. 9">
-        <span class="hint">Every monster, spell, and trap on the field, both players combined.</span>
+        <span class="hint">Every monster, spell/trap on the field — both players combined.</span>
       </div>
     </div>
 
-    <div class="field-row" style="margin-top:16px;">
+    <div class="field-group">
       <div class="field">
-        <label for="yourFusions">Your Fusion Monsters in Extra Deck — Levels</label>
+        <label for="yourFusions">Your Extra Deck — Fusion Levels</label>
         <input type="text" id="yourFusions" placeholder="e.g. 8, 6, 4">
-        <span class="hint">Comma-separated list of Levels available to banish.</span>
+        <span class="hint">Comma-separated Levels available to banish.</span>
       </div>
       <div class="field">
-        <label for="yourXyz">Your Xyz Monsters in Extra Deck — Ranks</label>
-        <input type="text" id="yourXyz" placeholder="e.g. 4, 4, 6, 6">
-        <span class="hint">Comma-separated list of Ranks. Need at least 2 of the same Rank.</span>
+        <label for="yourXyz">Your Extra Deck — Xyz Ranks</label>
+        <input type="text" id="yourXyz" placeholder="e.g. 4, 6, 8">
+        <span class="hint">Comma-separated Ranks you have at least 2 copies of.</span>
       </div>
     </div>
 
     <div class="result" id="stage1Result">
       <div class="dot"></div>
-      <div>Fill in the card counts and your Extra Deck monsters to see which combos work.</div>
+      <div>Fill in the card counts and your Extra Deck to find a legal combo.</div>
     </div>
-  </div>
+  </section>
 
-  <!-- STAGE 2: EFFECT -->
-  <div class="panel" id="stage2Panel" data-stage="Stage 2 · Optional Effect">
+  <div class="divider"></div>
+
+  <!-- STAGE 2 -->
+  <section class="stage stage-locked" id="stage2Section">
+    <div class="stage-label">Stage 2 · Optional Effect</div>
     <h2>Return 2 useless Fusion and XYZ monsters</h2>
-    <p class="desc">Return 1 Xyz and 1 Fusion Monster from your banished pile to the Extra Deck. Their combined Level/Rank must equal the Level <em>or</em> Rank of exactly one face-up monster your opponent controls. If it matches, banish everything they control.</p>
+    <p class="desc">Return 1 Xyz and 1 Fusion Monster from your banished pile to the Extra Deck. Their combined Level/Rank must match the Level or Rank of one face-up monster your opponent controls. If it matches, banish their entire field.</p>
 
-    <div class="unlock-note" id="unlockNote">🔒 Resolve Stage 1 successfully first to unlock this section.</div>
+    <div class="unlock-note" id="unlockNote">🔒 Complete Stage 1 first.</div>
 
-    <div class="field-row">
+    <div class="field-group">
       <div class="field">
         <label for="oppMonster">Opponent's monster — Level or Rank</label>
         <input type="number" id="oppMonster" min="1" max="13" placeholder="e.g. 7">
-        <span class="hint">The face-up monster you want to match.</span>
       </div>
       <div class="field">
-        <label for="bankedFusions">Your banished Fusion Monsters — Levels</label>
+        <label for="bankedFusions">Banished Fusion Monsters — Levels</label>
         <input type="text" id="bankedFusions" placeholder="e.g. 9, 5, 7">
-        <span class="hint">Comma-separated list available to return.</span>
+        <span class="hint">Comma-separated Levels available to return.</span>
       </div>
       <div class="field">
-        <label for="bankedXyz">Your banished Xyz Monsters — Ranks</label>
+        <label for="bankedXyz">Banished Xyz Monsters — Ranks</label>
         <input type="text" id="bankedXyz" placeholder="e.g. 1, 2, 4">
-        <span class="hint">Comma-separated list available to return.</span>
+        <span class="hint">Comma-separated Ranks available to return.</span>
       </div>
     </div>
 
     <div class="result" id="stage2Result">
       <div class="dot"></div>
-      <div>Fill in the opponent's monster and your banished monsters to see which combo wipes the field.</div>
+      <div>Fill in the opponent's monster and your banished monsters to check the wipe condition.</div>
     </div>
-  </div>
+  </section>
 
   <footer>Use Simultaneous Equation Cannons without doing the math.</footer>
-</div>
 
+</div>
 <script src="script.js"></script>
 </body>
 </html>
